@@ -1,0 +1,84 @@
+trainer:
+  choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
+  task: Segmentation   # [Classification, Segmentation]
+  choose_dataset: GCM   # [GCM, GCNC, GICC, FS, BraTS]
+  num_epochs: 300
+  seg_epochs: 300
+  warmup: 2        
+  batch_size: 4
+  resume: True
+  # lr: 0.001
+  lr: 0.0001
+  min_lr: 0.0000001
+  optimizer: adamw
+  # optimizer: adam
+  weight_decay: 0.05
+  # weight_decay: 1e-5
+  betas: [0.9, 0.95]
+
+finetune:
+  GCM:
+    checkpoint: None
+  GCNC:
+    checkpoint: None
+  GICC:
+    checkpoint: None
+  FS:
+    checkpoint: None
+  BraTS:
+    checkpoint: None
+
+GCM_loader:
+  train_ratio: 0.7
+  val_ratio: 0.1
+  test_ratio: 0.2
+  # fusion: do you need test dataset? if not, can use fusion to fuse val and test data to one dataloader.
+  fusion: False
+  # split dataset based on check time or not.
+  time_limit: False
+  num_workers: 0
+  over_label: False
+  over_add: 10
+  # use this flag can fix experiment examples, must set train_example.txt, val_example.txt and test_example.txt to root.
+  fix_example: True
+  # task: for different task: PM(腹膜转移分类) ; NL_SS(淋巴结同时序（手术）); NL_DS(淋巴结异时序（化疗后）)
+  task_Mu: 2  # define multi-tasks number, None means single task
+  task: LM  # 淋巴结转移 + FRS
+  # task: DS   # 腹隔膜转移
+  task_choose: LM_FRS  # LM_FRS or LMM
+  # leapfrog: some data error can write in this list to remove from dataloader
+  # leapfrog: ['0001902261', '0000439538','0002235469','0001308202']
+  leapfrog: ["0000553614"]
+  root: /mnt/liangjm/GCM/
+  # checkModels: ['A', 'ADC', 'T2_FS', 'V', 'DWI', 'P']
+  checkModels: ['ADC','T2_FS', 'V']
+  # model_scale: [[0, 6000], [0, 4500], [0, 4500]] # 对应模态的最小最大像素值，用于归一化
+  model_scale: [[0, 6000],[0, 4500],[0, 4500]] # 对应模态的最小最大像素值，用于归一化
+  target_size: [128, 128, 64]
+
+
+
+
+valer:
+  dl_score_csv_path: score
+
+visualization:
+  for_single: True
+  target_layers: hidden_downsample
+  visual:
+    GCM:
+      choose_image: "0002634197"
+      write_path: output_seg
+    GCNC:
+      choose_image: "122570"
+      write_path: output_seg
+    FS:
+      choose_image: "276"
+      write_path: output_seg
+  heatmap:
+    GCM:
+      choose_image: "0001899404"
+      write_path: output_slices
+    GCNC:
+      choose_image: "151829"
+      write_path: output_slices
