@@ -597,10 +597,19 @@ def reload_pre_train_model(
     model, accelerator, checkpoint_path="HSL_Net_class_multimodals_v1"
 ):
     check_path = f"{os.getcwd()}/model_store/{checkpoint_path}/best/"
-    accelerator.print("load pretrain model from %s" % check_path)
-    checkpoint = load_model_dict(
-        check_path + "pytorch_model.bin",
-    )
-    model.load_state_dict(checkpoint, strict=False)
-    accelerator.print(f"Load checkpoint model successfully!")
+    try:
+        accelerator.print("load pretrain model from %s" % check_path)
+        if os.path.exists(check_path + "pytorch_model.bin"):
+            checkpoint = load_model_dict(
+            check_path + "pytorch_model.bin",
+            )
+        else:
+            from safetensors.torch import load_file
+            checkpoint = load_file(
+                check_path + "model.safetensors",
+            )
+        model.load_state_dict(checkpoint, strict=False)
+        accelerator.print(f"Load checkpoint model successfully!")
+    except:
+        accelerator.print(f"Load checkpoint model faild!")
     return model

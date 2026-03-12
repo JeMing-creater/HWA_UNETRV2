@@ -1,14 +1,13 @@
 trainer:
   choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
-  task: Segmentation   # [Classification, Segmentation]
-  choose_dataset: GCM   # [GCM, GCNC, GICC, FS, BraTS]
+  task: Segmentation       # [Classification, Segmentation]
+  choose_dataset: GCM      # [GCM, GCNC, GICC, FS, BraTS]
   num_epochs: 300
-  seg_epochs: 300
-  warmup: 2        
+  warmup: 2
   batch_size: 4
   resume: True
-  # lr: 0.001
-  lr: 0.0001
+  lr: 0.001
+  # lr: 0.0001
   min_lr: 0.0000001
   optimizer: adamw
   # optimizer: adam

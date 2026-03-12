@@ -212,6 +212,11 @@ if __name__ == "__main__":
         or config.trainer.choose_model == "HSL_Net"
     ):
         freeze_seg_unused_heads(model)
+        reload_pre_train_model(
+            model=model,
+            accelerator=accelerator,
+            checkpoint_path="GCM_SegmentationHWAUNETR_v3",
+        )
 
     accelerator.print("load dataset...")
     train_loader, val_loader, test_loader, example = get_dataloader(config)

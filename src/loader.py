@@ -232,7 +232,7 @@ def load_MR_dataset_images(
         if image == [] or len(image) < len(use_models):
             print(f"{path} does not have image file or not enough modals. ")
             lack_model_flag = True
-
+        
         if data_choose == "GCM":
             if lack_flag == False and lack_model_flag == False:
                 if use_data_dict != {}:
@@ -405,7 +405,6 @@ def get_GCM_transforms(
     return load_transform, train_transform, val_transform
 
 
-
 class MultiModalityDataset(monai.data.Dataset):
     def __init__(
         self,
@@ -537,7 +536,6 @@ class MultiModalityDataset(monai.data.Dataset):
                 "label": result["label"],
                 "center": result["center"],
             }
-
 
 
 def split_list(data, ratios):
@@ -764,7 +762,7 @@ if __name__ == "__main__":
     for batch_data in train_loader:
         print(batch_data["image"].shape)
         print(batch_data["label"].shape)
-        print(batch_data["class_label"].shape)
+        print(batch_data["class_label"].shape)  # batch size, 1
         print(batch_data["class_label"].max())
         print(batch_data["class_label"].shape)
         print(batch_data["class_label"].max())
