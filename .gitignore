@@ -2,6 +2,7 @@ img
 data
 logs
 score
+export
 .vscode
 SegMamba
 __pycache__

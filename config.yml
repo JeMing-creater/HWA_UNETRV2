@@ -1,5 +1,5 @@
 trainer:
-  choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
+  choose_model: UXNET   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
   choose_dataset: GCM      # [GCM, GCNC, GICC, FS, BraTS]
   num_epochs: 300
@@ -74,6 +74,19 @@ visualization:
     FS:
       choose_image: "276"
       write_path: output_seg
+  segmap:
+    checkpoint: GCM_SegmentationUXNET         # 可手动指定；None 时自动按当前训练配置推断
+    use_best: True
+    split: all               # train / val / test / all
+    threshold: 0.5
+    save_case_dir: True
+    save_original_nifti: True
+    save_gt_nifti: True
+    save_pred_nifti: True
+
+    GCM:
+      choose_image: "0002367533"
+      write_path: "export"
   heatmap:
     GCM:
       choose_image: "0001899404"
