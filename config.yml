@@ -1,10 +1,10 @@
 trainer:
-  choose_model: UXNET   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
+  choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
-  choose_dataset: GCM      # [GCM, GCNC, GICC, FS, BraTS]
-  num_epochs: 300
+  choose_dataset: GCM      # [GCM, Colon, GCNC, GICC, FS, BraTS]
+  num_epochs: 500
   warmup: 2
-  batch_size: 4
+  batch_size: 2
   resume: True
   lr: 0.001
   # lr: 0.0001
@@ -17,6 +17,8 @@ trainer:
 
 finetune:
   GCM:
+    checkpoint: None
+  Colon:
     checkpoint: None
   GCNC:
     checkpoint: None
@@ -56,7 +58,29 @@ GCM_loader:
   target_size: [128, 128, 64]
 
 
+colon_loader:
+  root: "/mnt/liangjm/AbdomenAtlas2/AbdomenAtlas2.0/data/AbdomenAtlas2.0"
+  pos_txt: "/mnt/liangjm/AbdomenAtlas2/AbdomenAtlas2.0/data/colon_lesion_file_exists_ids.txt"
 
+  intensity:
+    a_min: -1000
+    a_max: 1000
+
+  train_ratio: 0.7
+  val_ratio: 0.1
+  test_ratio: 0.2
+  fusion: False
+  seed: 42
+  num_workers: 2
+  # if there are any examples loss or broken, please set in this flag.
+  leapfrag: []
+  checkModels: ["Only one"]
+  target_size: [128, 128, 128]
+
+  augment:
+    flip_prob: 0.5
+    scale_factor: 0.1
+    shift_offset: 0.1
 
 valer:
   dl_score_csv_path: score
@@ -75,7 +99,7 @@ visualization:
       choose_image: "276"
       write_path: output_seg
   segmap:
-    checkpoint: GCM_SegmentationUXNET         # 可手动指定；None 时自动按当前训练配置推断
+    checkpoint: GCM_SegmentationHWAUNETR         # 可手动指定；None 时自动按当前训练配置推断
     use_best: True
     split: all               # train / val / test / all
     threshold: 0.5

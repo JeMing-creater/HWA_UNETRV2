@@ -1,0 +1,24 @@
+colon_loader:
+  root: "/mnt/liangjm/AbdomenAtlas2/AbdomenAtlas2.0/data/AbdomenAtlas2.0"
+  pos_txt: "/mnt/liangjm/AbdomenAtlas2/AbdomenAtlas2.0/data/colon_lesion_file_exists_ids.txt"
+
+  intensity:
+    a_min: -1000
+    a_max: 1000
+
+  train_ratio: 0.7
+  val_ratio: 0.1
+  test_ratio: 0.2
+  seed: 42
+  num_workers: 2
+  # if there are any examples loss or broken, please set in this flag.
+  leapfrag: []
+  target_size: [128, 128, 128]
+
+  augment:
+    flip_prob: 0.5
+    scale_factor: 0.1
+    shift_offset: 0.1
+
+trainer:
+  batch_size: 1

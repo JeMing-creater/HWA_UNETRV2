@@ -20,6 +20,8 @@ def get_model(config):
     # data choose
     if config.trainer.choose_dataset == "GCM":
         use_config = config.GCM_loader
+    if config.trainer.choose_dataset == "Colon":
+        use_config = config.colon_loader
     elif config.trainer.choose_dataset == "GCNC":
         use_config = config.GCNC_loader
     elif config.trainer.choose_dataset == "GICC":
