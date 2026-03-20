@@ -1,19 +1,4 @@
 import torch.nn as nn
-from monai.networks.nets import SwinUNETR
-from src.model.Class.HWAUNETR_class import HWAUNETR as TFM_UNET_class
-from src.model.Seg.HWAUNETR_seg import HWAUNETR as TFM_UNET_seg
-from src.model.Class.ResNet import resnet50
-from src.model.Class.Vit import Vit as Vit
-from src.model.Class.TP_Mamba import SAM_MS
-from src.model.Multi_Tasks.HSL_Net import HSL_Net
-from src.model.Multi_Tasks.HWAUNETR_Mu import HWAUNETRV2 as HWAUNETR
-from src.model.Seg.uxnet_model import UXNET
-from src.model.Seg.sabnet_model import SaBNet
-
-# from src.model.Seg.nnFormer_model import nnFormer
-from src.model.Seg.alien_model import ALIEN
-from src.model.Seg.CoTr import ResTranUnet
-from src.model.Seg.unetr_plus_plus import UNETR_PP
 
 
 def get_model(config):
@@ -31,6 +16,7 @@ def get_model(config):
 
     # Multitask choose model will return first
     if "HSL_Net" in config.trainer.choose_model:
+        from src.model.Multi_Tasks.HSL_Net import HSL_Net
         model = HSL_Net(
             in_channels=len(use_config.checkModels),
             out_channels=len(use_config.checkModels),
@@ -47,6 +33,7 @@ def get_model(config):
         print("HSL_Net for multitask")
         return model
     elif "HWAUNETR" in config.trainer.choose_model:
+        from src.model.Multi_Tasks.HWAUNETR_Mu import HWAUNETRV2 as HWAUNETR
         model = HWAUNETR(
             in_chans=len(use_config.checkModels),
             out_chans=len(use_config.checkModels),
@@ -64,6 +51,7 @@ def get_model(config):
     # Single task choose model return now
     if config.trainer.task == "Segmentation":
         if "TFM_UNET" in config.trainer.choose_model:
+            from src.model.Seg.HWAUNETR_seg import HWAUNETR as TFM_UNET_seg
             model = TFM_UNET_seg(
                 in_chans=len(use_config.checkModels),
                 out_chans=len(use_config.checkModels),
@@ -78,6 +66,7 @@ def get_model(config):
             )
             print("TFM_UNET for segmentation")
         elif "SwinUNETR" in config.trainer.choose_model:
+            from monai.networks.nets import SwinUNETR
             model = SwinUNETR(
                 in_channels=len(use_config.checkModels),
                 out_channels=len(use_config.checkModels),
@@ -86,6 +75,7 @@ def get_model(config):
             )
             print("SwinUNETR for segmentation")
         elif "UXNET" in config.trainer.choose_model:
+            from src.model.Seg.uxnet_model import UXNET
             model = UXNET(
                 in_chans=len(use_config.checkModels),
                 out_chans=len(use_config.checkModels),
@@ -97,6 +87,7 @@ def get_model(config):
             )
             print("UXNET for segmentation")
         elif "SaBNet" in config.trainer.choose_model:
+            from src.model.Seg.sabnet_model import SaBNet
             model = SaBNet(
                 in_chs=len(use_config.checkModels),
                 out_chs=len(use_config.checkModels),
@@ -105,6 +96,7 @@ def get_model(config):
             print("SaBNet for segmentation")
         #
         elif "ALIEN" in config.trainer.choose_model:
+            from src.model.Seg.alien_model import ALIEN
             model = ALIEN(
                 n_channels=len(use_config.checkModels),
                 n_classes=len(use_config.checkModels),
@@ -112,6 +104,7 @@ def get_model(config):
             )
             print("ALIEN for segmentation")
         elif "CoTr" in config.trainer.choose_model:
+            from src.model.Seg.CoTr import ResTranUnet
             model = ResTranUnet(
                 in_channels=len(use_config.checkModels),
                 num_classes=len(use_config.checkModels),
@@ -124,6 +117,7 @@ def get_model(config):
             )
             print("CoTr for segmentation")
         elif "UNETR_PP" in config.trainer.choose_model:
+            from src.model.Seg.unetr_plus_plus import UNETR_PP
             model = UNETR_PP(
                 in_channels=len(use_config.checkModels),
                 out_channels=len(use_config.checkModels),
@@ -141,6 +135,7 @@ def get_model(config):
             print("UNETR++ for segmentation")
     elif config.trainer.task == "Classification":
         if "ResNet" in config.trainer.choose_model:
+            from src.model.Class.ResNet import resnet50
             model = resnet50(
                 in_classes=len(use_config.checkModels),
                 num_classes=1,
@@ -151,6 +146,7 @@ def get_model(config):
             print("ResNet for classification")
 
         elif "Vit" in config.trainer.choose_model:
+            from src.model.Class.Vit import Vit as Vit
             model = Vit(
                 in_channels=len(use_config.checkModels),
                 out_channels=len(use_config.checkModels),
@@ -165,6 +161,7 @@ def get_model(config):
             print("ViT for classification")
 
         elif "TFM_UNET" in config.trainer.choose_model:
+            from src.model.Class.HWAUNETR_class import HWAUNETR as TFM_UNET_class
             model = TFM_UNET_class(
                 in_chans=len(use_config.checkModels),
                 fussion=[1, 2, 4, 8],
@@ -178,6 +175,7 @@ def get_model(config):
             )
             print("TFM_UNET for classification")
         elif config.trainer.choose_model == "TP_Mamba":
+            from src.model.Class.TP_Mamba import SAM_MS
             model = SAM_MS(
                 in_classes=len(use_config.checkModels), num_classes=2, dr=16.0
             )
