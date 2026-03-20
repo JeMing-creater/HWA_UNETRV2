@@ -3,8 +3,11 @@ data
 logs
 score
 export
+segmap
 .vscode
 SegMamba
+vis_results
+vis_all_modalities
 __pycache__
 model_store
 output_seg

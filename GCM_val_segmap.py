@@ -320,9 +320,9 @@ def export_case_segmaps(config: EasyDict):
 
     probs = run_inference(model, image_tensor)
     # probs = label_tensor
-    probs = disperse_segmentation_preserve_connectivity(
-        probs, kernel_size=3, prob_add=0.8, iterations=2, dep_epper=True, lonely_thresh=2
-    )
+    # probs = disperse_segmentation_preserve_connectivity(
+    #     probs, kernel_size=3, prob_add=0.8, iterations=2, dep_epper=True, lonely_thresh=2
+    # )
     pred_bin = (probs >= float(segmap_cfg.threshold)).to(torch.uint8).cpu()
 
     case_output_dir = ensure_case_output_dir(

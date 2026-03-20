@@ -5,11 +5,13 @@ import random
 import numpy as np
 import monai
 import torch
-
+from monai.transforms import SpatialPadd, RandCropByPosNegLabeld, CenterSpatialCropd
+from monai.data.utils import list_data_collate
 from easydict import EasyDict
 from typing import Tuple, List, Dict, Set
 
 from monai.transforms import (
+    CropForegroundd,
     Compose,
     LoadImaged,
     EnsureChannelFirstd,
@@ -21,7 +23,6 @@ from monai.transforms import (
     RandShiftIntensityd,
     ToTensord,
 )
-
 
 def load_positive_ids(txt_path: str) -> List[str]:
     with open(txt_path, "r") as f:
@@ -52,72 +53,63 @@ def load_dataset_images(root: str, use_ids: List[str]) -> List[Dict]:
 
 
 def get_colon_transforms(config: EasyDict) -> Tuple[Compose, Compose]:
-    """
-    Return train_transform, val_transform
-    """
-    target_size = tuple(config.colon_loader.target_size)
+    patch_size = tuple(config.colon_loader.target_size)
     a_min = config.colon_loader.intensity.a_min
     a_max = config.colon_loader.intensity.a_max
-
-    # resize到128*3
-    resize_xform = Resized(
-        keys=["image", "label"],
-        spatial_size=target_size,
-        mode=("trilinear", "nearest-exact"),
-    )
 
     base = [
         LoadImaged(keys=["image", "label"], image_only=False, simple_keys=True),
         EnsureChannelFirstd(keys=["image", "label"]),
-        resize_xform,
+
+        # 强度归一化
         ScaleIntensityRanged(
             keys=["image"],
-            a_min=a_min,
-            a_max=a_max,
-            b_min=0.0,
-            b_max=1.0,
+            a_min=a_min, a_max=a_max,
+            b_min=0.0, b_max=1.0,
             clip=True,
         ),
+
+        # 保证图像至少不小于 patch_size
+        SpatialPadd(keys=["image", "label"], spatial_size=patch_size),
     ]
 
     train_transform = Compose(
-        base
-        + [
-            # 训练集的额外增强
-            RandFlipd(
+        base + [
+            RandCropByPosNegLabeld(
                 keys=["image", "label"],
-                prob=config.colon_loader.augment.flip_prob,
-                spatial_axis=0,
+                label_key="label",
+                spatial_size=patch_size,
+                pos=config.colon_loader.crop.pos,
+                neg=config.colon_loader.crop.neg, 
+                num_samples=config.colon_loader.crop.num_samples,
+                image_key="image",
             ),
-            RandFlipd(
-                keys=["image", "label"],
-                prob=config.colon_loader.augment.flip_prob,
-                spatial_axis=1,
-            ),
-            RandFlipd(
-                keys=["image", "label"],
-                prob=config.colon_loader.augment.flip_prob,
-                spatial_axis=2,
-            ),
-            RandScaleIntensityd(
-                keys="image", factors=config.colon_loader.augment.scale_factor, prob=1.0
-            ),
-            RandShiftIntensityd(
-                keys="image", offsets=config.colon_loader.augment.shift_offset, prob=1.0
-            ),
+
+            RandFlipd(keys=["image", "label"], prob=config.colon_loader.augment.flip_prob, spatial_axis=0),
+            RandFlipd(keys=["image", "label"], prob=config.colon_loader.augment.flip_prob, spatial_axis=1),
+            RandFlipd(keys=["image", "label"], prob=config.colon_loader.augment.flip_prob, spatial_axis=2),
+
+            RandScaleIntensityd(keys="image", factors=config.colon_loader.augment.scale_factor,
+                                prob=config.colon_loader.augment.intensity_prob),
+            RandShiftIntensityd(keys="image", offsets=config.colon_loader.augment.shift_offset,
+                                prob=config.colon_loader.augment.intensity_prob),
+
             ToTensord(keys=["image", "label"]),
         ]
     )
 
     val_transform = Compose(
-        base
-        + [
-            ToTensord(keys=["image", "label"]),
+        base + [
+        # 以label为前景裁出包含病灶的区域
+        CropForegroundd(keys=["image", "label"], source_key="label", margin=32),
+
+        ResizeWithPadOrCropd(keys=["image", "label"], spatial_size=patch_size),
+
+        ToTensord(keys=["image", "label"]),
         ]
     )
 
     return train_transform, val_transform
-
 
 class ColonLesionDataset(monai.data.Dataset):
     def __init__(self, data: List[Dict], transforms: Compose):
@@ -130,20 +122,25 @@ class ColonLesionDataset(monai.data.Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
         out = self.transforms(item)
-        return {
-            "image": out["image"],
-            "label": out["label"],
-            "case_id": item["case_id"],
-        }
+
+        # 训练集：RandCropByPosNegLabeld 会返回 list[dict]
+        if isinstance(out, list):
+            for d in out:
+                d["case_id"] = item["case_id"]
+            return out
+
+        # 验证集：返回单个 dict
+        out["case_id"] = item["case_id"]
+        return out
 
 
-# 7 1 2
+# 7 1 2 
 def split_list(data: List, ratios: List[float], seed: int = 42):
     random.Random(seed).shuffle(data)
     sizes = [math.ceil(len(data) * r) for r in ratios]
     total = sum(sizes)
     if total != len(data):
-        sizes[-1] -= total - len(data)
+        sizes[-1] -= (total - len(data))
 
     start = 0
     parts = []
@@ -169,11 +166,7 @@ def get_dataloader_colon(config: EasyDict):
     # 3) split
     train_data, val_data, test_data = split_list(
         all_data,
-        [
-            config.colon_loader.train_ratio,
-            config.colon_loader.val_ratio,
-            config.colon_loader.test_ratio,
-        ],
+        [config.colon_loader.train_ratio, config.colon_loader.val_ratio, config.colon_loader.test_ratio],
         seed=config.colon_loader.seed,
     )
 
@@ -182,8 +175,8 @@ def get_dataloader_colon(config: EasyDict):
 
     # 5) dataset
     train_ds = ColonLesionDataset(train_data, transforms=train_transform)
-    val_ds = ColonLesionDataset(val_data, transforms=val_transform)
-    test_ds = ColonLesionDataset(test_data, transforms=val_transform)
+    val_ds   = ColonLesionDataset(val_data, transforms=val_transform)
+    test_ds  = ColonLesionDataset(test_data, transforms=val_transform)
 
     # 6) dataloader
     train_loader = monai.data.DataLoader(
@@ -191,26 +184,28 @@ def get_dataloader_colon(config: EasyDict):
         batch_size=config.trainer.batch_size,
         shuffle=True,
         num_workers=config.colon_loader.num_workers,
+        collate_fn=list_data_collate,
     )
     val_loader = monai.data.DataLoader(
         val_ds,
         batch_size=config.trainer.batch_size,
         shuffle=False,
         num_workers=config.colon_loader.num_workers,
+        collate_fn=list_data_collate,
     )
     test_loader = monai.data.DataLoader(
         test_ds,
         batch_size=config.trainer.batch_size,
         shuffle=False,
         num_workers=config.colon_loader.num_workers,
+        collate_fn=list_data_collate,
     )
 
     return train_loader, val_loader, test_loader
 
-
 if __name__ == "__main__":
     config = EasyDict(
-        yaml.load(open("config.yml", "r", encoding="utf-8"), Loader=yaml.FullLoader)
+        yaml.load(open("/mnt/liangjm/AbdomenAtlas2/HWA_UNETRV2/config.yml", "r", encoding="utf-8"), Loader=yaml.FullLoader)
     )
 
     train_loader, val_loader, test_loader = get_dataloader_colon(config)
@@ -220,17 +215,18 @@ if __name__ == "__main__":
     print("-----train-----")
     for i, batch in enumerate(train_loader):
         print(i, batch["image"].shape, batch["label"].shape, batch["case_id"][:2])
-        total_sum += 1
+        print("label sum:", batch["label"].sum().item())
+        total_sum+=1
 
     print("-----val-----")
     for i, batch in enumerate(val_loader):
         print(i, batch["image"].shape, batch["label"].shape, batch["case_id"][:2])
         print("label sum:", batch["label"].sum().item())
-        total_sum += 1
+        total_sum+=1
 
     print("-----test-----")
     for i, batch in enumerate(test_loader):
         print(i, batch["image"].shape, batch["label"].shape, batch["case_id"][:2])
-        total_sum += 1
-
-    print(total_sum)  # 183
+        total_sum+=1
+    
+    print(total_sum) # 183
