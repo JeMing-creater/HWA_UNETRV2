@@ -1747,8 +1747,8 @@ if __name__ == "__main__":
     for batch_data in train_loader:
         print(batch_data["image"].shape)
         print(batch_data["label"].shape)
-        print(batch_data["class_label"].shape)
-        print(batch_data["class_label"].shape)
+        # print(batch_data["class_label"].shape)
+        # print(batch_data["class_label"].shape)
         
         
         train_count += 1
@@ -1756,15 +1756,15 @@ if __name__ == "__main__":
     for batch_data in val_loader:
         print(batch_data["image"].shape)
         print(batch_data["label"].shape)
-        print(batch_data["class_label"].shape)
-        print(batch_data["PFS_label"].shape)
+        # print(batch_data["class_label"].shape)
+        # print(batch_data["PFS_label"].shape)
         val_count += 1
         
     for batch_data in test_loader:
         print(batch_data["image"].shape)
         print(batch_data["label"].shape)
-        print(batch_data["class_label"].shape)
-        print(batch_data["PFS_label"].shape)
+        # print(batch_data["class_label"].shape)
+        # print(batch_data["PFS_label"].shape)
         test_count += 1
     
     print(f"Train batches: {train_count}")

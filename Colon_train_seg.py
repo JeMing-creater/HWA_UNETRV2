@@ -215,7 +215,7 @@ if __name__ == "__main__":
         # reload_pre_train_model(
         #     model=model,
         #     accelerator=accelerator,
-        #     checkpoint_path="GCM_SegmentationHWAUNETR_v3",
+        #     checkpoint_path="Colon_SegmentationHWAUNETR_v1",
         # )
 
     accelerator.print("load dataset...")

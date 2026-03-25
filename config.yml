@@ -1,8 +1,8 @@
 trainer:
   choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
-  choose_dataset: Colon      # [GCM, Colon, GCNC, GICC, FS, BraTS]
-  num_epochs: 500
+  choose_dataset: BraTS      # [GCM, Colon, GCNC, GICC, FS, BraTS]
+  num_epochs: 300
   warmup: 2
   batch_size: 2
   resume: True
@@ -87,6 +87,17 @@ colon_loader:
     scale_factor: 0.1
     shift_offset: 0.1
     intensity_prob: 0.2
+
+
+BraTS_loader:
+  train_ratio: 0.7
+  val_ratio: 0.1
+  test_ratio: 0.2
+  fusion: False
+  num_workers: 0
+  image_size: 128
+  dataPath: /mnt/liangjm/BRaTS2021/
+  target_size: [128, 128, 128]
 
 valer:
   dl_score_csv_path: score

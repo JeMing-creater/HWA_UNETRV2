@@ -1,6 +1,7 @@
 timm==0.9.8
 objprint==0.2.3
 accelerate==0.18.0
+pandas==2.3.2
 torch
 tensorboard
 easydict
@@ -19,7 +20,6 @@ tqdm
 termcolor
 scikit-learn
 scikit-image
-pandas
 einops
 ninja
 transformers
