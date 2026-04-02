@@ -43,59 +43,87 @@ def train_one_epoch(
     epoch: int,
     step: int,
 ):
-    # 训练
     model.train()
+
+    # 关键：每个 epoch 开始前先清空累计型 metric，避免显存/内存持续增长
+    for metric_name in metrics:
+        metrics[metric_name].reset()
+
+    optimizer.zero_grad(set_to_none=True)
+
     for i, image_batch in enumerate(train_loader):
-        # if (
-        #     config.trainer.choose_model == "HWAUNETR"
-        #     or config.trainer.choose_model == "HSL_Net"
-        # ):
-        #     _, logits = model(image_batch["image"])
-        # else:
-        #     logits = model(
-        #         image_batch["image"]
-        #     )  # some moedls can not accepted inference, I do not know why.
-        logits = model(image_batch["image"])
-        total_loss = 0
-        log = ""
-        for name in loss_functions:
-            alpth = 1
-            loss = loss_functions[name](logits, image_batch["label"])
-            accelerator.log({"Train/" + name: float(loss)}, step=step)
-            total_loss += alpth * loss
-        val_outputs = post_trans(logits)
-        for metric_name in metrics:
-            metrics[metric_name](y_pred=val_outputs, y=image_batch["label"])
-        accelerator.backward(total_loss)
-        optimizer.step()
-        optimizer.zero_grad()
-        # for name, param in model.named_parameters():
-        #     if param.grad is None:
-        #         print(name)
-        accelerator.log(
-            {
-                "Train/Total Loss": float(total_loss),
-            },
-            step=step,
-        )
-        accelerator.print(
-            f"Epoch [{epoch+1}/{config.trainer.num_epochs}][{i + 1}/{len(train_loader)}] Training Loss:{total_loss}",
-            flush=True,
-        )
-        step += 1
+        try:
+            images = image_batch["image"]
+            labels = image_batch["label"]
+
+            logits = model(images)
+
+            total_loss = 0.0
+            for name in loss_functions:
+                alpha = 1.0
+                loss = loss_functions[name](logits, labels)
+                accelerator.log({"Train/" + name: float(loss.detach())}, step=step)
+                total_loss = total_loss + alpha * loss
+
+            # 训练指标只保留 detach 后的结果，避免图被 metric 持有
+            with torch.no_grad():
+                val_outputs = post_trans(logits.detach())
+                for metric_name in metrics:
+                    metrics[metric_name](y_pred=val_outputs, y=labels)
+
+            accelerator.backward(total_loss)
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+
+            accelerator.log(
+                {
+                    "Train/Total Loss": float(total_loss.detach()),
+                },
+                step=step,
+            )
+
+            accelerator.print(
+                f"Epoch [{epoch+1}/{config.trainer.num_epochs}][{i + 1}/{len(train_loader)}] "
+                f"Training Loss:{float(total_loss.detach())}",
+                flush=True,
+            )
+
+            step += 1
+
+            # 显式释放中间变量，降低显存滞留概率
+            del images, labels, logits, val_outputs, total_loss
+
+        except RuntimeError as e:
+            if "out of memory" in str(e).lower():
+                accelerator.print(
+                    f"[OOM] Epoch {epoch+1}, Iter {i+1}: CUDA out of memory. "
+                    f"Clearing cache and re-raising...",
+                    flush=True,
+                )
+                optimizer.zero_grad(set_to_none=True)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.ipc_collect()
+                raise
+            else:
+                raise
+
     scheduler.step(epoch)
+
     metric = {}
     for metric_name in metrics:
         batch_acc = metrics[metric_name].aggregate()[0].to(accelerator.device)
         if accelerator.num_processes > 1:
             batch_acc = accelerator.reduce(batch_acc) / accelerator.num_processes
+
         metric_dice = {}
         metric_dice[f"Train/mean {metric_name}"] = float(batch_acc.mean())
-        for i in range(3):
-            metric_dice[f"Train/ Modal {i}"] = float(
-                batch_acc[i]
-            )
+        for class_idx in range(3):
+            metric_dice[f"Train/ Modal {class_idx}"] = float(batch_acc[class_idx])
         metric.update(metric_dice)
+
+        # 关键：epoch 结束后再次 reset，防止下一个 epoch 继续累计
+        metrics[metric_name].reset()
 
     accelerator.log(metric, step=epoch)
     return metric, step

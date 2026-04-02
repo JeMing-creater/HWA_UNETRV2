@@ -29,6 +29,7 @@ def get_model(config):
             use_config.checkModels
         )
     elif config.trainer.choose_dataset == "BraTS":
+        use_config = config.BraTS_loader
         in_channels, out_channels = 4, 3
 
     # Multitask choose model will return first
