@@ -803,3 +803,41 @@ class XMamba(nn.Module):
         out = self.decoder1(dec0)
                 
         return self.out(out)
+    
+    import torch
+
+def main():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(0)
+
+    # 建议 out_chans=1 测二分类（也可用默认13）
+    model = XMamba(
+        in_chans=1,
+        out_chans=1,
+        depths=[2, 2, 2, 2],
+        feat_size=[64, 128, 256, 512],
+        hidden_size=768,
+        spatial_dims=3,
+    ).to(device)
+    model.eval()
+
+    B, C = 2, 1
+    x = torch.randn(B, C, 64, 64, 64, device=device)
+
+    with torch.no_grad():
+        y = model(x)
+
+    print("input  shape:", tuple(x.shape))
+    print("output shape:", tuple(y.shape))
+
+    # 关键断言：空间尺寸是否保持 64^3
+    assert y.shape[0] == B, "batch mismatch"
+    assert y.shape[2:] == (64, 64, 64), f"spatial mismatch: {y.shape}"
+
+    # 关键断言：通道是否等于 out_chans
+    assert y.shape[1] == 1, f"channel mismatch: {y.shape}"
+
+    print("PASS: XMamba supports 64x64x64 input.")
+
+if __name__ == "__main__":
+    main()

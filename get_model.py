@@ -31,6 +31,10 @@ def get_model(config):
     elif config.trainer.choose_dataset == "BraTS":
         use_config = config.BraTS_loader
         in_channels, out_channels = 4, 3
+    elif config.trainer.choose_dataset == "MNIST":
+        use_config = config.MNIST_loader
+        in_channels, out_channels = 1, 1 
+        
 
     # Multitask choose model will return first
     if "HSL_Net" in config.trainer.choose_model:
@@ -95,6 +99,7 @@ def get_model(config):
                 img_size=use_config.target_size,
                 feature_size=48,
             )
+            
             print("SwinUNETR for segmentation")
         elif "UXNET" in config.trainer.choose_model:
             from src.model.Seg.uxnet_model import UXNET
@@ -111,14 +116,13 @@ def get_model(config):
             print("UXNET for segmentation")
         elif "SaBNet" in config.trainer.choose_model:
             from src.model.Seg.sabnet_model import SaBNet
-
             model = SaBNet(
                 in_chs=in_channels,
                 out_chs=out_channels,
                 num_heads=2,
             )
             print("SaBNet for segmentation")
-        #
+        
         elif "ALIEN" in config.trainer.choose_model:
             from src.model.Seg.alien_model import ALIEN
 
@@ -160,6 +164,32 @@ def get_model(config):
                 do_ds=True,
             )
             print("UNETR++ for segmentation")
+        elif "nnFormer" in config.trainer.choose_model:
+            from src.model.Seg.nnFormer_model import nnFormer
+            model = nnFormer(
+                crop_size=[use_config.target_size[0],use_config.target_size[1],use_config.target_size[2]],
+                embedding_dim=96,
+                input_channels=in_channels,
+                num_classes=2,
+                conv_op=nn.Conv3d,
+                depths=[2, 2, 2, 2],
+                num_heads=[3, 6, 12, 24],
+                patch_size=[4, 4, 4],
+                window_size=[4, 4, 8, 4],
+                deep_supervision=False,
+            )
+            print("nnFormer for segmentation")
+        elif "UNet" in config.trainer.choose_model:
+            from monai.networks.nets import Unet
+            model = Unet(
+                spatial_dims=3,
+                in_channels=in_channels,
+                out_channels=out_channels,
+                channels=(16, 32, 64, 128, 256),    # 各阶段通道数
+                strides=(2, 2, 2, 2),               # 下采样步长
+                num_res_units=2,                    # 残差单元数
+                dropout=0.0,                        # Dropout率
+            )
     elif config.trainer.task == "Classification":
         if "ResNet" in config.trainer.choose_model:
             from src.model.Class.ResNet import resnet50
@@ -214,7 +244,6 @@ def get_model(config):
 
         elif config.trainer.choose_model == "X3D":
             from src.model.Class.X3D_Efficient import X3D_Classifier
-
             model = X3D_Classifier(
                 in_channels=in_channels,
                 num_classes=1,
@@ -231,14 +260,9 @@ def get_model(config):
             print("AMSNet for classification")
         elif config.trainer.choose_model == "HCNN":
             from src.model.Class.Hybrid_CNN_Transformer import Hybrid_CNN_Transformer
-
             model = Hybrid_CNN_Transformer(
-                in_channels=in_channels,
-                img_size=(
-                    use_config.target_size[0],
-                    use_config.target_size[1],
-                    use_config.target_size[2],
-                ),
+                in_channels=in_channels,  # <--- 强制为 1
+                img_size=(64, 64, 64), # <--- 显式传入 64
                 num_classes=1,
                 embed_dim=256,
             )
@@ -255,6 +279,7 @@ def get_model(config):
                 ),
                 num_classes=1,
             )
+            
             print("M3T for classification")
         elif config.trainer.choose_model == "Med3D":
             from src.model.Class.Med3D_ResNet import generate_model

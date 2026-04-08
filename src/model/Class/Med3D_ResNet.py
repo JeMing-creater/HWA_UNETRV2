@@ -140,7 +140,7 @@ class ResNet3D(nn.Module):
     def forward(self, x):
         # x shape: (Batch, 3, W, H, Z)
         # 转换为 (Batch, 3, Z, H, W) 也就是 (B, C, D, H, W)
-        x = x.permute(0, 1, 4, 3, 2)
+        # x = x.permute(0, 1, 4, 3, 2)
 
         x = self.conv1(x)
         x = self.bn1(x)
@@ -155,7 +155,7 @@ class ResNet3D(nn.Module):
         x = self.avgpool(x)
         x = x.flatten(1)
         x = self.fc(x)
-        x = self.sigmoid(x)
+        # x = self.sigmoid(x)
 
         return x
 
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     # 配置
     BATCH_SIZE = 2
     IN_CHANNELS = 3
-    W, H, Z = 128, 128, 64
+    W, H, Z = 64, 64, 64
     
     # 实例化模型 (默认使用 ResNet-18，这在 Med3D 中最常用)
     # 如果您想要更强的模型，可以将 model_depth 改为 50

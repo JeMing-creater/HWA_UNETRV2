@@ -213,7 +213,7 @@ class UnetrPPEncoder(nn.Module):
 
         self.downsample_layers = nn.ModuleList()  # stem and 3 intermediate downsampling conv layers
         stem_layer = nn.Sequential(
-            get_conv_layer(spatial_dims, in_channels, dims[0], kernel_size=(2, 4, 4), stride=(2, 4, 4),
+            get_conv_layer(spatial_dims, in_channels, dims[0], kernel_size=(4, 4, 4), stride=(4, 4, 4),
                            dropout=dropout, conv_only=True, ),
             get_norm_layer(name=("group", {"num_groups": 1}), channels=dims[0]),
         )
@@ -1337,7 +1337,7 @@ class UNETR_PP(SegmentationNetwork):
             self,
             in_channels: int,
             out_channels: int,
-            img_size: [64, 128, 128],
+            img_size: [128, 128, 128],
             feature_size: int = 16,
             hidden_size: int = 256,
             num_heads: int = 4,
@@ -1387,7 +1387,7 @@ class UNETR_PP(SegmentationNetwork):
         if pos_embed not in ["conv", "perceptron"]:
             raise KeyError(f"Position embedding layer of type {pos_embed} is not supported.")
 
-        self.patch_size = (2, 4, 4)
+        self.patch_size = (4, 4, 4)
         self.feat_size = (
             img_size[0] // self.patch_size[0] // 8,  # 8 is the downsampling happened through the four encoders stages
             img_size[1] // self.patch_size[1] // 8,  # 8 is the downsampling happened through the four encoders stages
@@ -1442,7 +1442,7 @@ class UNETR_PP(SegmentationNetwork):
             in_channels=feature_size * 2,
             out_channels=feature_size,
             kernel_size=3,
-            upsample_kernel_size=(2, 4, 4),
+            upsample_kernel_size=(4, 4, 4),
             norm_name=norm_name,
             out_size=64 * 128 * 128,
             conv_decoder=True,
@@ -1480,7 +1480,10 @@ class UNETR_PP(SegmentationNetwork):
         else:
             logits = self.out1(out)
 
-        return logits[0]
+        if self.do_ds:
+            return [self.out1(out), self.out2(dec1), self.out3(dec2)]
+        else:
+            return self.out1(out)
 
 
 
@@ -1489,8 +1492,8 @@ if __name__ == "__main__":
     torch.manual_seed(0)
 
     in_channels = 3
-    out_channels = 3
-    img_size = (128, 128, 64)
+    out_channels = 4
+    img_size = (128, 128, 128)
 
     feature_size = 16
     num_heads = 4
@@ -1519,4 +1522,4 @@ if __name__ == "__main__":
         y = model(x)
 
     print("x.shape =", tuple(x.shape))
-    # print("y.shape =", tuple(y[0].shape))
+    print("y.shape =", tuple(y[0].shape))

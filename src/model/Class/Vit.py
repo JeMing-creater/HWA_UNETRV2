@@ -304,12 +304,12 @@ class Vit(nn.Module):
 
 
 if __name__ == "__main__":
-    x = torch.randn(size=(1, 2, 128, 128, 64))
+    x = torch.randn(size=(1, 1, 64, 64, 64))
     model = Vit(
-        in_channels=2,
-        out_channels=2,
+        in_channels=1,
+        out_channels=1,
         embed_dim=96,
-        embedding_dim=32,
+        embedding_dim=8,
         channels=(24, 48, 60),
         blocks=(1, 2, 3, 2),
         heads=(1, 2, 4, 4),

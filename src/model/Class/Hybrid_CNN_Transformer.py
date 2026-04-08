@@ -4,8 +4,7 @@ import math
 
 class Conv3DBlock(nn.Module):
     """
-    基础 3D 卷积块：Conv3d + BatchNorm + ReLU + MaxPool
-    用于逐步提取特征并降低空间维度。
+    基础 3D 卷积块
     """
     def __init__(self, in_channels, out_channels, pool=True):
         super(Conv3DBlock, self).__init__()
@@ -20,20 +19,19 @@ class Conv3DBlock(nn.Module):
 class Hybrid_CNN_Transformer(nn.Module):
     def __init__(
         self, 
-        in_channels=3, 
-        img_size=(128, 128, 64), 
+        in_channels=1,              # 默认为 1
+        img_size=(64, 64, 64),      # 默认为 64
         num_classes=1,
-        cnn_channels=[32, 64, 128], # CNN 各层通道数
-        embed_dim=256,              # Transformer 嵌入维度
-        trans_depth=4,              # Transformer 层数
-        num_heads=8,                # 注意力头数
+        cnn_channels=[32, 64, 128], # CNN 通道配置
+        embed_dim=256,
+        trans_depth=4,
+        num_heads=8,
         mlp_ratio=4.,
         dropout=0.1
     ):
         super(Hybrid_CNN_Transformer, self).__init__()
         
-        # 1. 3D CNN Encoder (Feature Extractor)
-        # ---------------------------------------------------
+        # 1. CNN Encoder
         self.cnn_encoder = nn.Sequential()
         curr_dim = in_channels
         for i, out_dim in enumerate(cnn_channels):
@@ -43,28 +41,25 @@ class Hybrid_CNN_Transformer(nn.Module):
             )
             curr_dim = out_dim
             
-        # 计算 CNN 输出后的特征图尺寸
-        # 假设经过了 3 次 MaxPool (2x2x2)，尺寸缩小为原来的 1/8
-        self.D_feat = img_size[2] // (2 ** len(cnn_channels))
-        self.H_feat = img_size[1] // (2 ** len(cnn_channels))
-        self.W_feat = img_size[0] // (2 ** len(cnn_channels))
+        # 计算经过 CNN 下采样后的尺寸 (假设每层都做 2x2x2 Pooling)
+        downsample_factor = 2 ** len(cnn_channels)
+        self.D_feat = img_size[2] // downsample_factor
+        self.H_feat = img_size[1] // downsample_factor
+        self.W_feat = img_size[0] // downsample_factor
         
-        # 展平后的序列长度 (Sequence Length)
+        # 序列长度
         self.seq_len = self.D_feat * self.H_feat * self.W_feat
         cnn_out_dim = cnn_channels[-1]
         
-        # 2. Bridge: CNN to Transformer Projection
-        # ---------------------------------------------------
-        # 将 CNN 的特征通道映射到 Transformer 的 embed_dim
+        # 2. Projection
         self.proj = nn.Linear(cnn_out_dim, embed_dim)
         
-        # 位置编码 (Positional Embedding) - Learnable
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.seq_len, embed_dim))
+        # 位置编码 (包含 CLS token 的位置)
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.seq_len + 1, embed_dim))
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.dropout = nn.Dropout(dropout)
 
-        # 3. Transformer Encoder (Global Context Modeler)
-        # ---------------------------------------------------
+        # 3. Transformer
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=embed_dim, 
             nhead=num_heads, 
@@ -72,18 +67,18 @@ class Hybrid_CNN_Transformer(nn.Module):
             dropout=dropout,
             activation='gelu',
             batch_first=True,
-            norm_first=True # Pre-Norm 结构更稳定
+            norm_first=True 
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=trans_depth)
 
-        # 4. Classification Head
-        # ---------------------------------------------------
+        # 4. Classifier Head
         self.norm = nn.LayerNorm(embed_dim)
         self.classifier = nn.Sequential(
             nn.Linear(embed_dim, 64),
             nn.ReLU(),
-            nn.Linear(64, num_classes),
-            nn.Sigmoid() # 输出置信度
+            nn.Linear(64, num_classes)
+            # 【重要修改】删除了这里的 Sigmoid()
+            # 因为训练用的 BCEWithLogitsLoss 自带 Sigmoid
         )
         
         self._init_weights()
@@ -100,82 +95,45 @@ class Hybrid_CNN_Transformer(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        # Input Check: (B, 3, W, H, Z)
-        # Adapt to PyTorch Conv3d: (B, C, D, H, W) -> Assuming Z is Depth
-        x = x.permute(0, 1, 4, 3, 2) # (B, 3, Z, H, W)
+        # Input: (B, C, D, H, W)
+        
+        # 【重要修改】删除了 permute，保持原始顺序
         
         B = x.shape[0]
 
-        # 1. Local Feature Extraction (CNN)
-        x = self.cnn_encoder(x) # Output: (B, 128, D', H', W')
+        # 1. CNN
+        x = self.cnn_encoder(x) 
+        # Output shape: (B, 128, D', H', W')
         
-        # 2. Sequence Flattening
+        # 2. Flatten & Transpose
         # (B, C, D', H', W') -> (B, C, N) -> (B, N, C)
         x = x.flatten(2).transpose(1, 2) 
         
-        # 3. Projection & Embedding
-        x = self.proj(x) # (B, Seq_Len, Embed_Dim)
+        # 3. Projection
+        x = self.proj(x) 
         
-        # Add CLS token (可选，这里使用 GAP，但保留 CLS 结构以备扩展)
+        # Add CLS token
         cls_tokens = self.cls_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
         
         # Add Positional Embedding
-        # 注意：这里需要处理 pad 后的 pos_embed 对齐，简单起见我们只取对应的部分
-        # (Seq_Len + 1 for CLS token)
-        if x.shape[1] <= self.pos_embed.shape[1] + 1:
-             x = x + torch.cat((torch.zeros(1, 1, self.pos_embed.shape[2], device=x.device), self.pos_embed), dim=1)[:, :x.shape[1], :]
-        
+        # 简单对齐，防止尺寸不匹配报错
+        if x.shape[1] <= self.pos_embed.shape[1]:
+             x = x + self.pos_embed[:, :x.shape[1], :]
+        else:
+            # 如果输入尺寸比预想的大，就插值 (简单处理则截断，严谨处理应用插值)
+            x = x + self.pos_embed[:, :x.shape[1], :]
+
         x = self.dropout(x)
 
-        # 4. Global Modeling (Transformer)
+        # 4. Transformer
         x = self.transformer(x)
 
-        # 5. Classification
-        # 使用 CLS token 的输出，或者全局平均池化 (GAP)
-        # 这里使用 GAP (Global Average Pooling) 融合所有 token 的信息，通常对分类更稳健
-        x = x[:, 1:, :].mean(dim=1) # Exclude CLS token for averaging, or integrate it
+        # 5. Classification (Use CLS token)
+        # 取第 0 个 token (CLS) 进行分类，或者用 Global Average
+        x = x[:, 0, :] 
         
         x = self.norm(x)
-        x = self.classifier(x)
+        x = self.classifier(x) # 输出 Logits
         
         return x
-
-if __name__ == "__main__":
-    # 配置
-    BATCH_SIZE = 2
-    IN_CHANNELS = 3
-    W, H, Z = 128, 128, 64
-    
-    # 实例化模型
-    # 注意：img_size 必须准确，用于计算 Transformer 的序列长度
-    model = Hybrid_CNN_Transformer(
-        in_channels=IN_CHANNELS, 
-        img_size=(W, H, Z), 
-        num_classes=1,
-        embed_dim=256
-    )
-    
-    # 模拟输入
-    input_tensor = torch.randn(BATCH_SIZE, IN_CHANNELS, W, H, Z)
-    
-    print("-" * 30)
-    print("Hybrid 3D CNN-Transformer Model Test")
-    print("-" * 30)
-    
-    try:
-        output = model(input_tensor)
-        
-        print(f"Input Shape:  {input_tensor.shape}")
-        print(f"Output Shape: {output.shape}")
-        print(f"Output Values:\n {output.detach().numpy()}")
-        
-        # 验证
-        assert output.shape == (BATCH_SIZE, 1), "Output shape mismatch!"
-        assert output.min() >= 0 and output.max() <= 1, "Output values out of range [0, 1]"
-        
-        print("-" * 30)
-        print("Test Passed: Hybrid model is ready.")
-        
-    except Exception as e:
-        print(f"Test Failed: {e}")

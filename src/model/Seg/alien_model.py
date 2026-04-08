@@ -374,10 +374,10 @@ class ALIEN(nn.Module):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = ALIEN(n_channels=3, n_classes=3, trilinear=True).to(device)
+    model = ALIEN(n_channels=4, n_classes=3, trilinear=True).to(device)
     model.eval()
 
-    x = torch.randn(2, 3, 64, 128, 128).to(device)
+    x = torch.randn(2, 4, 128, 128, 128).to(device)
 
     with torch.no_grad():
         y = model(x)

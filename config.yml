@@ -1,7 +1,7 @@
 trainer:
   choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
-  choose_dataset: GCM      # [GCM, Colon, GCNC, GICC, FS, BraTS]
+  choose_dataset: GCM      # [GCM, Colon, GCNC, GICC, FS, BraTS, MNIST]
   num_epochs: 105
   warmup: 2
   batch_size: 1
@@ -27,6 +27,8 @@ finetune:
   FS:
     checkpoint: None
   BraTS:
+    checkpoint: None
+  MNIST:
     checkpoint: None
 
 GCM_loader:
@@ -98,6 +100,26 @@ BraTS_loader:
   image_size: 128
   dataPath: /mnt/liangjm/BRaTS2021/
   target_size: [128, 128, 128]
+
+MNIST_loader:
+  root: "/mnt/liangjm/AbdomenAtlas2/AdrenalMNIST3D"
+  fusion: False
+  num_workers: 8
+  # if there are any examples loss or broken, please set in this flag.
+  leapfrag: []
+  checkModels: ["Only one"]
+  target_size: [64, 64, 64]
+
+  crop:
+    pos: 3
+    neg: 1
+    num_samples: 2
+
+  augment:
+    flip_prob: 0.5
+    scale_factor: 0.1
+    shift_offset: 0.1
+    intensity_prob: 0.2
 
 valer:
   dl_score_csv_path: score

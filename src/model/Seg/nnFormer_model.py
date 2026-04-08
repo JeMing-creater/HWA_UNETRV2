@@ -3,14 +3,31 @@ import torch.nn.functional as F
 from timm.models.layers import DropPath, to_3tuple, trunc_normal_
 import numpy as np
 from batchgenerators.augmentations.utils import pad_nd_image
-from nnformer.utilities.random_stuff import no_op
-from nnformer.utilities.to_torch import to_cuda, maybe_to_torch
 from torch import nn
 import torch
 from scipy.ndimage.filters import gaussian_filter
 from typing import Union, Tuple, List
 from torch.cuda.amp import autocast
 
+def maybe_to_torch(d):
+    if isinstance(d, list):
+        d = [maybe_to_torch(i) if not isinstance(i, torch.Tensor) else i for i in d]
+    elif not isinstance(d, torch.Tensor):
+        d = torch.from_numpy(d).float()
+    return d
+
+def to_cuda(data, non_blocking=True, gpu_id=0):
+    if isinstance(data, list):
+        data = [i.cuda(gpu_id, non_blocking=non_blocking) for i in data]
+    else:
+        data = data.cuda(gpu_id, non_blocking=non_blocking)
+    return data
+class no_op(object):
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *args):
+        pass
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -1727,13 +1744,13 @@ class nnFormer(SegmentationNetwork):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    crop_size = [64, 128, 128]
-    patch_size = [2, 4, 4]
+    crop_size = [128, 128, 128]
+    patch_size = [4, 4, 4]
 
     model = nnFormer(
-        crop_size=[64, 128, 128],
+        crop_size=[128, 128, 128],
         embedding_dim=96,
-        input_channels=3,
+        input_channels=4,
         num_classes=3,
         conv_op=nn.Conv3d,
         depths=[2, 2, 2, 2],
@@ -1743,7 +1760,7 @@ if __name__ == "__main__":
         deep_supervision=False,
     ).to(device).eval()
 
-    x = torch.randn(1, 1, *crop_size, device=device)
+    x = torch.randn(2, 4, *crop_size, device=device)
 
     with torch.no_grad():
         y = model(x)

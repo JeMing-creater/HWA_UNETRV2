@@ -212,7 +212,7 @@ class SwinTransformer3D(nn.Module):
         self.norm = nn.LayerNorm(self.num_features)
         self.avgpool = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Linear(self.num_features, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # Input: (B, C, D, H, W)
@@ -237,7 +237,7 @@ class SwinTransformer3D(nn.Module):
         x = self.avgpool(x) # (B, C, 1)
         x = x.flatten(1) # (B, C)
         x = self.head(x) # (B, num_classes)
-        x = self.sigmoid(x)
+        # x = self.sigmoid(x)
         return x
 
 class Swin3D_Classifier(nn.Module):
@@ -266,7 +266,7 @@ if __name__ == "__main__":
     # 配置
     BATCH_SIZE = 2
     IN_CHANNELS = 3
-    W, H, Z = 128, 128, 64 # 注意：Swin 这里的尺寸最好是 window_size * 2^layers 的倍数
+    W, H, Z = 64, 64, 64 # 注意：Swin 这里的尺寸最好是 window_size * 2^layers 的倍数
     
     model = Swin3D_Classifier(in_channels=IN_CHANNELS, img_size=(W, H, Z), num_classes=1)
     

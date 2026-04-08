@@ -110,7 +110,7 @@ class AMSNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             nn.Linear(64, num_classes),
-            nn.Sigmoid() # 输出置信度
+            # nn.Sigmoid() # 输出置信度
         )
         
         self._init_weights()
@@ -130,7 +130,7 @@ class AMSNet(nn.Module):
     def forward(self, x):
         # x shape: (B, 3, W, H, Z)
         # Permute to (B, C, Z, H, W) -> 这里假设 Z 是深度 D
-        x = x.permute(0, 1, 4, 3, 2)
+        # x = x.permute(0, 1, 4, 3, 2)
         
         # Layer 1
         x = self.conv1(x)
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     # 配置参数
     BATCH_SIZE = 2
     IN_CHANNELS = 3
-    W, H, Z = 128, 128, 64
+    W, H, Z = 64, 64, 64
     
     # 实例化模型
     model = AMSNet(in_channels=IN_CHANNELS, num_classes=1)

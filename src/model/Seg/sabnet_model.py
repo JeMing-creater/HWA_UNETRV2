@@ -198,14 +198,14 @@ class SaBNet(nn.Module):
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    in_chs = 3
+    in_chs = 4
     out_chs = 3
-    num_heads = 2
+    num_heads = 4
 
-    model = SaBNet(in_chs=in_chs, out_chs=out_chs, num_heads=num_heads).to(device)
+    model = SaBNet(in_chs=in_chs, out_chs=out_chs, num_heads=in_chs).to(device)
     model.eval()
 
-    x = torch.randn(1, in_chs, 128, 128, 64).to(device)
+    x = torch.randn(1, in_chs, 128, 128, 128).to(device)
 
     model.deep_supervision = False
 

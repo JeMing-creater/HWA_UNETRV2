@@ -99,7 +99,7 @@ class M3T(nn.Module):
         # 5. MLP Head (Classification)
         self.norm = nn.LayerNorm(embed_dim)
         self.head = nn.Linear(embed_dim, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
 
         self._init_weights()
 
@@ -123,7 +123,7 @@ class M3T(nn.Module):
     def forward(self, x):
         # x shape: (B, 3, W, H, Z)
         # 调整维度以适配 Conv3d (B, C, D, H, W) -> 这里我们将 Z 视为 D
-        x = x.permute(0, 1, 4, 3, 2) # (B, 3, Z, H, W)
+        # x = x.permute(0, 1, 4, 3, 2) # (B, 3, Z, H, W)
         
         B = x.shape[0]
         
@@ -173,7 +173,7 @@ class M3T(nn.Module):
         out = self.head(cls_out) # (B, 1)
         
         # 7. 最终激活 (Sigmoid 用于输出置信度)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         
         return out
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     # 尺寸: (Batch Size, 3(模态数), W, H, Z)
     batch_size = 2
     in_channels = 3
-    W, H, Z = 128, 128, 64
+    W, H, Z = 64, 64, 64
     
     input_tensor = torch.randn(batch_size, in_channels, W, H, Z)
     

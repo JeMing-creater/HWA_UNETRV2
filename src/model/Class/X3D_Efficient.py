@@ -118,7 +118,7 @@ class X3D_Classifier(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool3d(1)
         self.dropout = nn.Dropout(dropout_rate)
         self.fc = nn.Linear(widths[3], num_classes)
-        self.sigmoid = nn.Sigmoid() # 输出置信度
+        # self.sigmoid = nn.Sigmoid() # 输出置信度
         
         self._init_weights()
 
@@ -147,7 +147,7 @@ class X3D_Classifier(nn.Module):
         # Input: (Batch, 3, W, H, Z)
         # Adapt to PyTorch 3D standard: (Batch, C, D, H, W)
         # 这里的 Z (深度/切片) 对应 PyTorch 的 D 维度
-        x = x.permute(0, 1, 4, 3, 2) # (B, 3, Z, H, W)
+        # x = x.permute(0, 1, 4, 3, 2) # (B, 3, Z, H, W)
         
         x = self.stem(x)
         
@@ -162,7 +162,7 @@ class X3D_Classifier(nn.Module):
         x = x.flatten(1)
         x = self.dropout(x)
         x = self.fc(x)
-        x = self.sigmoid(x)
+        # x = self.sigmoid(x)
         
         return x
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     BATCH_SIZE = 2
     IN_CHANNELS = 3
     # X3D 非常灵活，但建议 H, W 为 32 的倍数
-    W, H, Z = 128, 128, 64 
+    W, H, Z = 64, 64, 64 
     
     model = X3D_Classifier(in_channels=IN_CHANNELS, num_classes=1)
     

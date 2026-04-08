@@ -375,7 +375,7 @@ if __name__ == "__main__":
 
     model = UXNET(
         in_chans=3,
-        out_chans=3,
+        out_chans=4,
         depths=[2, 2, 2, 2],
         feat_size=[48, 96, 192, 384],
         drop_path_rate=0.0,
@@ -383,7 +383,7 @@ if __name__ == "__main__":
         spatial_dims=3,
     ).to(device).eval()
 
-    x = torch.randn(2, 3, 128, 128, 64, device=device)
+    x = torch.randn(2, 3, 128, 128, 128, device=device)
 
     with torch.no_grad():
         y = model(x)

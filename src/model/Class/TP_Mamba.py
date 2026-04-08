@@ -341,6 +341,6 @@ class SAM_MS(nn.Module):
 if __name__ == "__main__":
     sam_ms = SAM_MS(in_classes=1, num_classes=2, dr=16.0)
     # x = torch.randn(1, 1, 96, 96, 96) # batch, channel (default 1 for CT), Height, Width, Depth
-    x = torch.randn(2, 1, 128, 128, 64)
+    x = torch.randn(2, 1, 64, 64, 64)
     y = sam_ms(x)
     print(y.size())

@@ -330,6 +330,6 @@ if __name__ == '__main__':
 
     model = resnet50(in_classes=2, num_classes=1, shortcut_type='B', spatial_size=64,sample_count=128).to(device)
 
-    x = torch.randn(2, 2, 128, 128, 64).to(device)
+    x = torch.randn(2, 2, 64, 64, 64).to(device)
     y = model(x)
     print(y.size())
