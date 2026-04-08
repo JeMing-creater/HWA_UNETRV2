@@ -304,7 +304,7 @@ if __name__ == "__main__":
     main()
     # python error_map_generter.py \
     # --models_root_dir /workspace/HWA/segmap/GCM/ \
-    # --case_id "0002367533" \
+    # --case_id "0002682076" \
     # --cursor_dict '{"ADC":[157,68,16],"T2_FS":[183,110,16],"V":[161,78,53]}' \
     # --axis 2 \
     # --save_root_dir /workspace/HWA/vis_all_modalities/ \

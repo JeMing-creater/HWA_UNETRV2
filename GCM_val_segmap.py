@@ -319,6 +319,7 @@ def export_case_segmaps(config: EasyDict):
     model = load_best_model(model, checkpoint_name, device)
 
     probs = run_inference(model, image_tensor)
+    print(probs.shape)
     # probs = label_tensor
     # probs = disperse_segmentation_preserve_connectivity(
     #     probs, kernel_size=3, prob_add=0.8, iterations=2, dep_epper=True, lonely_thresh=2

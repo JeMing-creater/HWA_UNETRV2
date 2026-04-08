@@ -1,8 +1,8 @@
 trainer:
-  choose_model: SwinUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
+  choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
-  choose_dataset: BraTS      # [GCM, Colon, GCNC, GICC, FS, BraTS]
-  num_epochs: 100
+  choose_dataset: GCM      # [GCM, Colon, GCNC, GICC, FS, BraTS]
+  num_epochs: 105
   warmup: 2
   batch_size: 1
   resume: True
