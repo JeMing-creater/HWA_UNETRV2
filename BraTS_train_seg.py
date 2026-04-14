@@ -55,7 +55,6 @@ def train_one_epoch(
         try:
             images = image_batch["image"]
             labels = image_batch["label"]
-
             logits = model(images)
 
             total_loss = 0.0
@@ -147,16 +146,6 @@ def val_one_epoch(
     hd95_acc = 0
     hd95_class = []
     for i, image_batch in enumerate(val_loader):
-        # if (
-        #     config.trainer.choose_model == "HWAUNETR"
-        #     or config.trainer.choose_model == "HSL_Net"
-        # ):
-        #     try:
-        #         _, logits = model(image_batch["image"])
-        #     except:
-        #         logits = inference(image_batch["image"], model)
-        # else:
-        #     logits = inference(image_batch["image"], model)  # some moedls can not accepted inference, I do not know why
         logits = inference(image_batch["image"], model)
         val_outputs = post_trans(logits)
         for metric_name in metrics:
@@ -241,11 +230,11 @@ if __name__ == "__main__":
         or config.trainer.choose_model == "HSL_Net"
     ):
         freeze_seg_unused_heads(model)
-        # reload_pre_train_model(
-        #     model=model,
-        #     accelerator=accelerator,
-        #     checkpoint_path="GCM_SegmentationHWAUNETR_v3",
-        # )
+        reload_pre_train_model(
+            model=model,
+            accelerator=accelerator,
+            checkpoint_path="BraTS_SegmentationHWAUNETR_copy",
+        )
 
     accelerator.print("load dataset...")
     train_loader, val_loader, test_loader = get_dataloader(config)
@@ -384,7 +373,7 @@ if __name__ == "__main__":
             best_metrics = dice_class
             best_hd95 = hd95_acc
 
-            if config.BraTS_loader.fusion:
+            if config.BraTS_loader.fusion != True:
                 # 记录最优test acc
                 (
                     best_test_score,

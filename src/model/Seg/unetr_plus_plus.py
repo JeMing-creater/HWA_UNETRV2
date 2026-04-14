@@ -263,7 +263,7 @@ class UnetrPPEncoder(nn.Module):
 
     def forward(self, x):
         x, hidden_states = self.forward_features(x)
-        return x, hidden_states
+        return x
 
 
 class UnetrUpBlock(nn.Module):

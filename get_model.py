@@ -167,7 +167,7 @@ def get_model(config):
         elif "nnFormer" in config.trainer.choose_model:
             from src.model.Seg.nnFormer_model import nnFormer
             model = nnFormer(
-                crop_size=[use_config.target_size[0],use_config.target_size[1],use_config.target_size[2]],
+                crop_size=[use_config.target_size[0], use_config.target_size[1],use_config.target_size[2]],
                 embedding_dim=96,
                 input_channels=in_channels,
                 num_classes=2,

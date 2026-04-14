@@ -6,6 +6,7 @@ export
 segmap
 .vscode
 SegMamba
+visualize_cases
 vis_results
 vis_all_modalities
 __pycache__

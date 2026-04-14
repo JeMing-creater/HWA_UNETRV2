@@ -1,8 +1,8 @@
 trainer:
-  choose_model: HWAUNETR   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
+  choose_model: UXNET   # # Class: [HWAUNETR ,HSL_Net, TFM_UNET_class, ResNet, Vit, TP_Mamba, X3D, AMSNET, HCNN, M3T, Med3D, Swin3D] Seg: [HSL_Net, TFM_UNET_seg, CoTr, UNETR_PP, SwinUNETR, UXNET, SaBNet, nnFormer, ALIEN]
   task: Segmentation       # [Classification, Segmentation]
-  choose_dataset: GCM      # [GCM, Colon, GCNC, GICC, FS, BraTS, MNIST]
-  num_epochs: 105
+  choose_dataset: BraTS      # [GCM, Colon, GCNC, GICC, FS, BraTS, MNIST]
+  num_epochs: 200
   warmup: 2
   batch_size: 1
   resume: True
@@ -93,8 +93,7 @@ colon_loader:
 
 BraTS_loader:
   train_ratio: 0.7
-  val_ratio: 0.1
-  test_ratio: 0.2
+  val_ratio: 0.3
   fusion: False
   num_workers: 0
   image_size: 128

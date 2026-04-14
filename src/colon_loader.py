@@ -51,6 +51,25 @@ def load_dataset_images(root: str, use_ids: List[str]) -> List[Dict]:
         data_list.append({"image": img_path, "label": label_path, "case_id": cid})
     return data_list
 
+def build_case_tensor(
+    item: Dict,
+    load_transforms,
+    device: torch.device,
+) -> Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor], torch.Tensor]:
+    images = []
+    labels = []
+    raw_images = []
+    raw_labels = []
+    for i in range(len(item["image"])):
+        data = load_transforms({"image": item["image"][i], "label": item["label"][i]})
+        raw_images.append(data["image"].clone())
+        raw_labels.append(data["label"].clone())
+        images.append(data["image"])
+        labels.append(data["label"])
+
+    image_tensor = torch.cat(images, dim=0).unsqueeze(0).to(device)
+    label_tensor = torch.cat(labels, dim=0).unsqueeze(0)
+    return image_tensor, raw_images, raw_labels, label_tensor
 
 def get_colon_transforms(config: EasyDict) -> Tuple[Compose, Compose]:
     patch_size = tuple(config.colon_loader.target_size)

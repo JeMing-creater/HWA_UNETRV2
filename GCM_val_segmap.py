@@ -313,7 +313,7 @@ def export_case_segmaps(config: EasyDict):
 
     load_transforms, _, _ = get_GCM_transforms(config)
     image_tensor, _, _, label_tensor = build_case_tensor(item, load_transforms, device)
-
+    
     model = get_model(config)
     checkpoint_name = resolve_checkpoint_name(config, segmap_cfg)
     model = load_best_model(model, checkpoint_name, device)

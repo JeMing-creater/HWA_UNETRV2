@@ -1676,19 +1676,22 @@ def get_dataloader_FS(
 def get_dataloader_BraTS(
     config: EasyDict,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
-    train_images = load_brats2021_dataset_images(config.BraTS_loader.dataPath)
+    train_images = load_brats2021_dataset_images(config.BraTS_loader.dataPath + "/training")
+    test_images = load_brats2021_dataset_images(config.BraTS_loader.dataPath + "/validation")
+    
     train_transform, val_transform = get_Brats_transforms(config)
     
     data = train_images.copy()
+    test_data = test_images.copy()
     random.shuffle(data)
+    random.shuffle(test_data)
     
     n = len(data)
 
     train_end = int(n * config.BraTS_loader.train_ratio)
-    val_end = int(n * (config.BraTS_loader.train_ratio + config.BraTS_loader.val_ratio))
     train_data = data[:train_end]
-    val_data   = data[train_end:val_end]
-    test_data  = data[val_end:]
+    val_data   = data[train_end:]
+    test_data  = test_data
     
     train_dataset = monai.data.Dataset(
         data=train_data,
@@ -1737,9 +1740,6 @@ if __name__ == "__main__":
 
     train_loader, val_loader, test_loader = get_dataloader_BraTS(config)
     
-
-    
-    
     train_count = 0
     val_count = 0
     test_count = 0
@@ -1749,8 +1749,6 @@ if __name__ == "__main__":
         print(batch_data["label"].shape)
         # print(batch_data["class_label"].shape)
         # print(batch_data["class_label"].shape)
-        
-        
         train_count += 1
         
     for batch_data in val_loader:

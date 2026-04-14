@@ -454,8 +454,8 @@ class HWAUNETRV2(nn.Module):
 
         x = self.SegHead(x)
         c_x = self.Class_Decoder(up_feature)
-        return c_x, x
-        # return x
+        # return c_x, x
+        return x
 
 
 def test_weight(model, x):

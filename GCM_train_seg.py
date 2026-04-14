@@ -355,7 +355,7 @@ if __name__ == "__main__":
             best_metrics = dice_class
             best_hd95 = hd95_acc
 
-            if config.GCM_loader.fusion:
+            if config.GCM_loader.fusion != True:
                 # 记录最优test acc
                 (
                     best_test_score,
