@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 from typing import Dict
-
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import monai
 import torch
