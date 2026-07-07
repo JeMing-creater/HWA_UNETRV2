@@ -122,7 +122,7 @@ class Mamba(nn.Module):
         self.D._no_weight_decay = True
 
         # bidirectional
-        assert bimamba_type == "v3"
+        # assert bimamba_type == "v3"
 
         A_b = repeat(
             torch.arange(1, self.d_state + 1, dtype=torch.float32, device=device),
@@ -179,9 +179,6 @@ class Mamba(nn.Module):
 
         self.D_s = nn.Parameter(torch.ones(self.d_inner, device=device))  # Keep in fp32
         self.D_s._no_weight_decay = True
-
-
-
 
         self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)
 
@@ -241,7 +238,6 @@ class Mamba(nn.Module):
                     delta_softplus=True,
                 )
                 A_s = -torch.exp(self.A_s_log.float())
-
                 xz_s = xz.chunk(self.nslices, dim=-1)
                 xz_s = torch.stack(xz_s,dim=-1)
                 xz_s = xz_s.flatten(-2)
@@ -259,9 +255,11 @@ class Mamba(nn.Module):
                     delta_softplus=True,
                 )
                 out_s = out_s.reshape(batch,self.d_inner,seqlen//self.nslices,self.nslices).permute(0,1,3,2).flatten(-2)
-
-                # F.linear(rearrange(out_z, "b d l -> b l d"), out_proj_weight, out_proj_bias)
+                o_1 = out
+                o_2 = out_b
+                o_3 = out_s
                 out = F.linear(rearrange(out + out_b.flip([-1]) + out_s, "b d l -> b l d"), self.out_proj.weight, self.out_proj.bias)
+
             elif self.bimamba_type == "v2":
                 A_b = -torch.exp(self.A_b_log.float())
                 out = mamba_inner_fn_no_out_proj(
@@ -277,6 +275,8 @@ class Mamba(nn.Module):
                     delta_bias=self.dt_proj.bias.float(),
                     delta_softplus=True,
                 )
+                keep_out = out
+
                 out_b = mamba_inner_fn_no_out_proj(
                     xz.flip([-1]),
                     self.conv1d_b.weight,
@@ -290,8 +290,11 @@ class Mamba(nn.Module):
                     delta_bias=self.dt_proj_b.bias.float(),
                     delta_softplus=True,
                 )
-                # F.linear(rearrange(out_z, "b d l -> b l d"), out_proj_weight, out_proj_bias)
                 out = F.linear(rearrange(out + out_b.flip([-1]), "b d l -> b l d"), self.out_proj.weight, self.out_proj.bias)
+
+                o_1 = out
+                o_2 = keep_out
+                o_3 = out_b
             else:
                 out = mamba_inner_fn(
                     xz,
@@ -308,6 +311,9 @@ class Mamba(nn.Module):
                     delta_bias=self.dt_proj.bias.float(),
                     delta_softplus=True,
                 )
+                o_1 = out
+                o_2 = out
+                o_3 = out
         else:
             x, z = xz.chunk(2, dim=1)
             # Compute short convolution
@@ -351,7 +357,10 @@ class Mamba(nn.Module):
                 ssm_state.copy_(last_state)
             y = rearrange(y, "b d l -> b l d")
             out = self.out_proj(y)
-        return out
+            o_1 = out
+            o_2 = out
+            o_3 = out
+        return out, o_1, o_2, o_3
 
     def step(self, hidden_states, conv_state, ssm_state):
         dtype = hidden_states.dtype
@@ -435,7 +444,6 @@ class Mamba(nn.Module):
             inference_params.key_value_memory_dict[self.layer_idx] = (conv_state, ssm_state)
         else:
             conv_state, ssm_state = inference_params.key_value_memory_dict[self.layer_idx]
-            # TODO: What if batch size changes between generation, and we reuse the same states?
             if initialize_states:
                 conv_state.zero_()
                 ssm_state.zero_()

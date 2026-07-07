@@ -1,8 +1,8 @@
 trainer:
   warmup: 0
-  batch_size: 6
+  batch_size: 2
   resume: false
-  lr: 1.2e-05
+  lr: 0.001
   min_lr: 1.0e-07
   min_free_gpu_mem_gb: 16.0
   optimizer: adamw
@@ -11,10 +11,10 @@ trainer:
   - 0.9
   - 0.95
   model_variant: soft_prior
-  task: segmentation
+  task: classification
   resume_train: false
-  grad_accum_steps: 3
-  num_epochs: 160
+  grad_accum_steps: 1
+  num_epochs: 100
 stage_train:
   visualization:
     enable: false
@@ -83,13 +83,13 @@ stage_train:
     scale_floor_tau: 0.1
     evidence_peak_margin: 0.2
   stage2:
-    epochs: 160
+    epochs: 0
     lr: 1.2e-05
     min_lr: 1.0e-07
     checkpoint_name: HWA_stage2_segmentation
     init_seg_checkpoint: None
     init_seg_checkpoint_scope: compatible
-    init_checkpoint: HWA_stage1_detector
+    init_checkpoint: None
     init_checkpoint_scope: detector
     resume: false
     use_hwa_prior_in_encoder: true
@@ -190,11 +190,11 @@ stage_train:
     fast_scalar_metrics: true
     skip_best_test_eval: false
   stage3:
-    epochs: 0
+    epochs: 100
     lr: 0.001
     min_lr: 1.0e-07
     checkpoint_name: HWA_stage3_classification
-    init_checkpoint: None
+    init_checkpoint: HWA_stage2_segmentation
     resume: false
     classifier_lr_scale: 1.0
     lambda_class: 1.0
