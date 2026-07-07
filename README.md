@@ -9,6 +9,9 @@ classification, and prognosis-related prediction. The full dataset will be
 released after manuscript acceptance. Before the full release, representative
 examples are available in `sample_data/gcm2026_examples/`.
 
+
+![Framework overview of HWA-UNETRv2](docs/images/hwa_unetrv2_framework_overview.png)
+
 ## Installation
 
 Run the following commands from the project root:
