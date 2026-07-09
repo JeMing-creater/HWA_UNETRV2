@@ -10,7 +10,7 @@ released after manuscript acceptance. Before the full release, representative
 examples are available in `sample_data/gcm2026_examples/`.
 
 
-![Framework overview of HWA-UNETRv2](docs/images/hwa_unetrv2_framework_overview.png)
+![Framework overview of HWA-UNETRv2](/docs/images/hwa_unetrv2_framework_overview.png)
 
 ## Installation
 
@@ -48,7 +48,7 @@ Each case is expected to provide three MRI modalities:
 - `T2_FS`: T2-weighted fat-saturated sequence
 - `V`: contrast-enhanced venous-phase T1-weighted sequence
 
-![Multimodal MRI examples from the GCM 2026 dataset](docs/images/gcm2026_multimodal_mri_examples.png)
+![Multimodal MRI examples from the GCM 2026 dataset](/docs/images/gcm2026_multimodal_mri_examples.png)
 
 The figure presents representative GCM 2026 multimodal MRI cases, showing ADC,
 T2_FS, and venous-phase images alongside manually annotated gastric lesion
@@ -75,9 +75,9 @@ The expected dataset layout is:
 Split files should contain one case identifier per line. The default split
 configuration uses:
 
-- `splits/train_examples.txt`: 481 cases
+- `splits/train_examples.txt`: 482 cases
 - `splits/val_examples.txt`: 69 cases
-- `splits/test_examples.txt`: 137 cases
+- `splits/test_examples.txt`: 138 cases
 
 Five representative de-identified examples are provided under
 `sample_data/gcm2026_examples/`. Each example contains ADC, T2_FS, and
