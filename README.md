@@ -83,7 +83,14 @@ Five representative de-identified examples are provided under
 `sample_data/gcm2026_examples/`. Each example contains ADC, T2_FS, and
 venous-phase MRI volumes with gastric lesion masks. The accompanying
 `sample_classification_metrics.xlsx` file records the corresponding
-de-identified classification and prognosis labels.
+de-identified classification and prognosis labels. 
+
+More data informations are shown in the follow table:
+
+![Detail information of the GCM 2026 dataset](/docs/images/DataTable.png)
+Note:
+Continuous variables (Age) are expressed as median [interquartile range, IQR]; Categorical variables (Gender, T stage, N stage) are expressed as n (%); T stage represents the pathological extent of the primary tumor (T1–T4); N stage represents the status of regional lymph node metastasis, where N0 indicates no metastasis and N1 indicates the presence of metastasis; Abbreviations: IQR, interquartile range; T, tumor; N, node.
+
 
 ### Configuration
 
